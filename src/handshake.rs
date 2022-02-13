@@ -6,15 +6,15 @@ struct HandshakePacket {
 }
 
 enum NextState {
-    STATUS(u8),
-    LOGIN(u8)
+    Status(u8),
+    Login(u8)
 }
 
 impl NextState {
     fn id(&self) -> u8 {
         match *self {
-            NextState::STATUS => 1,
-            NextState::LOGIN => 2,
+            NextState::Status => 1,
+            NextState::Login => 2,
         }
     }
 }
