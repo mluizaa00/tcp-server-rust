@@ -1,3 +1,5 @@
+use std::net::TcpStream;
+
 struct HandshakePacket {
     protocol_version: i32,
     address: String,
@@ -13,8 +15,12 @@ enum NextState {
 impl NextState {
     fn id(&self) -> u8 {
         match *self {
-            NextState::Status => 1,
-            NextState::Login => 2,
+            NextState::Status(_) => 1,
+            NextState::Login(_) => 2,
         }
     }
+}
+
+pub fn handle_handshake(stream: TcpStream) {
+   
 }

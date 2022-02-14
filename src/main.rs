@@ -1,4 +1,16 @@
+#[macro_use]
+extern crate lazy_static;
+
+mod connection_state;
+mod handshake;
+mod status;
+mod info;
+
 use std::{net::{TcpListener, TcpStream}};
+
+lazy_static! {
+    pub static ref REGISTRY: info::Registry = info::create_default();
+}
 
 fn main() {
     println!("Hello, world!");
@@ -26,6 +38,16 @@ fn start_server(ip: String) {
 }
 
 fn handle_connection(stream: TcpStream) {
-    println!("Connection established! {}", stream.local_addr().unwrap());
-    
+    let address = stream.local_addr().unwrap().ip();
+    println!("Connection established! {}", address.to_string());
+
+    // TODO: verify if stream is valid and it is a packet
+
+    let connection: connection_state::Connection = connection_state::create_default_connection();
+    match connection.state {
+        Handshake => handshake::handle_handshake(stream),
+        Status => status::handle_status(stream)
+    }
+
+    // REGISTRY.connections.insert(address.to_string(), connection);
 }
