@@ -51,7 +51,7 @@ fn handle_connection(mut stream: TcpStream) {
     let packet_id: u8 = stream.read_varint().unwrap();
 
     match connection.state {
-        Handshake => handshake::handle_handshake(stream, packet_id),
+        Handshake => handshake::handle_handshake(stream),
         Status => status::handle_status(stream, packet_id)
     }
 
