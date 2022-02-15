@@ -1,5 +1,5 @@
-use std::{net::TcpStream, io::{Read, BufReader}};
-use varuint::ReadVarint;
+use tokio::{net::{TcpStream}, io::{AsyncReadExt}};
+
 struct HandshakePacket {
     protocol_version: i32,
     address: String,
@@ -8,25 +8,19 @@ struct HandshakePacket {
 }
 
 impl HandshakePacket {
-    pub fn read(mut buffer: BufReader<TcpStream>) -> HandshakePacket {
-        let protocol_version = buffer.read_varint().unwrap();
+    pub async fn read(mut buffer: TcpStream) -> HandshakePacket {
+        let protocol_version: i32 = buffer.read_i32().await.unwrap();
+        let port: u16 = buffer.read_u16().await.unwrap();
+        let next_state: u8 = buffer.read_u8().await.unwrap();
 
         let mut address: String = String::new();
-        buffer.read_to_string(&mut address)
-            .expect("Unable to read Handshake Packet address field.");
-    
-        let mut port_bytes = [0; 5];
-        buffer.read_exact(&mut port_bytes)
-            .expect("Unable to read Handshake Packet port field.");
-
-        let next_state: u8 = 1;
-        buffer.read_exact(&mut [next_state])
-            .expect("Unable to read Handshake Packet next_state field.");
+        buffer.read_to_string(&mut address).await
+            .expect("Invalid String on Handshake Packet address field.");
     
         let handshake_packet = HandshakePacket {
                 protocol_version: protocol_version,
                 address: address,
-                port: 25565,
+                port: port,
                 next_state: NextState::id(next_state)
         };
 
@@ -51,8 +45,6 @@ impl NextState {
 }
 
 pub fn handle_handshake(stream: TcpStream) {
-    let buffer: BufReader<TcpStream> = BufReader::new(stream.try_clone().unwrap());
-
-    let handshake_packet = HandshakePacket::read(buffer);
+    let handshake_packet = HandshakePacket::read(stream);
     // TODO: Handle handshake packet
 }
