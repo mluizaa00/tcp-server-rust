@@ -13,4 +13,11 @@ name = "tcp-server"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
+ "varuint",
 ]
+
+[[package]]
+name = "varuint"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "896414bb0f21aba00ff26b0a8a3679331b5a86886f217c9d9396b919a7bf4ac6"

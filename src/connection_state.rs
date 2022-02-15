@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum ConnectionState {
     Handshake,
     Status,
@@ -5,6 +6,7 @@ pub enum ConnectionState {
     Play
 }
 
+#[derive(Clone)]
 pub struct Connection {
     pub state: ConnectionState
 }

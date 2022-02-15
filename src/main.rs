@@ -4,12 +4,15 @@ extern crate lazy_static;
 mod connection_state;
 mod handshake;
 mod status;
-mod info;
 
 use std::{net::{TcpListener, TcpStream}};
+use std::collections::HashMap;
+use varuint::{ReadVarint};
+
+use crate::connection_state::Connection;
 
 lazy_static! {
-    pub static ref REGISTRY: info::Registry = info::create_default();
+    pub static ref REGISTRY: HashMap<String, connection_state::Connection> = HashMap::new();
 }
 
 fn main() {
@@ -37,17 +40,20 @@ fn start_server(ip: String) {
     }
 }
 
-fn handle_connection(stream: TcpStream) {
+fn handle_connection(mut stream: TcpStream) {
     let address = stream.local_addr().unwrap().ip();
     println!("Connection established! {}", address.to_string());
 
-    // TODO: verify if stream is valid and it is a packet
+    let connection: Connection = REGISTRY.contains_key(&address.to_string())
+        .then(|| REGISTRY.get(&address.to_string()).cloned().unwrap_or(connection_state::create_default_connection()))
+        .unwrap();
 
-    let connection: connection_state::Connection = connection_state::create_default_connection();
+    let packet_id: u8 = stream.read_varint().unwrap();
+
     match connection.state {
-        Handshake => handshake::handle_handshake(stream),
-        Status => status::handle_status(stream)
+        Handshake => handshake::handle_handshake(stream, packet_id),
+        Status => status::handle_status(stream, packet_id)
     }
 
-    // REGISTRY.connections.insert(address.to_string(), connection);
+    // REGISTRY.insert(address.to_string(), connection);
 }

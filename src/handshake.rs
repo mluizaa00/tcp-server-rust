@@ -21,6 +21,6 @@ impl NextState {
     }
 }
 
-pub fn handle_handshake(stream: TcpStream) {
+pub fn handle_handshake(stream: TcpStream, packet_id: u8) {
    
 }
