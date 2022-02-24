@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.4.0"
-varuint = "0.6"
 tokio = { version = "1.16.1", features = ["full"] }

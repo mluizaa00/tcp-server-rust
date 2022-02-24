@@ -3,13 +3,13 @@ extern crate lazy_static;
 
 mod connection_state;
 mod handshake;
-mod status;
+mod var_int;
 
 use std::collections::HashMap;
 
-use tokio::net::{TcpListener, TcpStream};
+use tokio::{net::{TcpListener, TcpStream}};
 
-use crate::connection_state::Connection;
+use crate::{connection_state::Connection};
 
 lazy_static! {
     pub static ref REGISTRY: HashMap<String, connection_state::Connection> = HashMap::new();
@@ -29,9 +29,8 @@ async fn start_server(ip: String) {
         Ok(listener) => {
             println!("Connected server.");
             let socket = listener.accept().await;
-
             match socket {
-                Ok(stream) => handle_connection(stream.0),
+                Ok(stream) => handle_connection(stream.0).await,
                 Err(error) => println!("Stream connection failed. {}", error.to_string())
             };
         },
@@ -41,9 +40,12 @@ async fn start_server(ip: String) {
     }
 }
 
-fn handle_connection(stream: TcpStream) {
+async fn handle_connection(mut stream: TcpStream) {
     let address = stream.local_addr().unwrap().ip();
     println!("Connection established! {}", address.to_string());
+
+    let packet_id = var_int::read_varint_i32(&mut stream).await.unwrap();
+    println!("PACKET ID: {}", packet_id);
 
     let connection: Connection = REGISTRY.contains_key(&address.to_string())
         .then(|| REGISTRY.get(&address.to_string()).cloned().unwrap_or(connection_state::create_default_connection()))
