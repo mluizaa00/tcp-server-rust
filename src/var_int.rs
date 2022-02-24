@@ -3,7 +3,7 @@ use tokio::{net::TcpStream, io::{AsyncReadExt, AsyncWriteExt}};
 #[cfg(not(no_std))]
 type Result<T> = std::io::Result<T>;
 
-async fn write_var_i32(stream: &mut TcpStream, mut value: i32) -> Result<usize> {
+async fn write_varint_i32(stream: &mut TcpStream, mut value: i32) -> Result<usize> {
     let mut buffer = [0];
     let mut cnt = 0;
 
@@ -20,7 +20,7 @@ async fn write_var_i32(stream: &mut TcpStream, mut value: i32) -> Result<usize> 
     return Ok(cnt)
 }
 
-async fn write_var_i64(stream: &mut TcpStream, mut value: i64) -> Result<usize> {
+async fn write_varint_i64(stream: &mut TcpStream, mut value: i64) -> Result<usize> {
     let mut buffer = [0];
     let mut cnt = 0;
 

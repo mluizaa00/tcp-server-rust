@@ -27,6 +27,8 @@ impl HandshakePacket {
         return handshake_packet;
     } 
 }
+
+#[derive(Debug)]
 enum NextState {
     Status,
     Login
@@ -44,7 +46,9 @@ impl NextState {
     }
 }
 
-pub fn handle_handshake(stream: TcpStream) {
-    let handshake_packet = HandshakePacket::read(stream);
+pub async fn handle_handshake(stream: TcpStream) {
+    let packet = HandshakePacket::read(stream).await;
+
+    println!("HANDSHAKE | PROTOCOL: {}, ADDRESS {}, PORT {} |", packet.protocol_version, packet.address, packet.port)
     // TODO: Handle handshake packet
 }

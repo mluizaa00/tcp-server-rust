@@ -28,11 +28,13 @@ async fn start_server(ip: String) {
     match result {
         Ok(listener) => {
             println!("Connected server.");
-            let socket = listener.accept().await;
-            match socket {
-                Ok(stream) => handle_connection(stream.0).await,
-                Err(error) => println!("Stream connection failed. {}", error.to_string())
-            };
+            loop {
+                let socket = listener.accept().await;
+                match socket {
+                    Ok(stream) => handle_connection(stream.0).await,
+                    Err(error) => println!("Stream connection failed. {}", error.to_string())
+                };
+            }
         },
         Err(error) => {
             panic!("Couldn't connect to server. Check your ports. Error thrown: {}", error.to_string());
@@ -47,12 +49,15 @@ async fn handle_connection(mut stream: TcpStream) {
     let packet_id = var_int::read_varint_i32(&mut stream).await.unwrap();
     println!("PACKET ID: {}", packet_id);
 
-    let connection: Connection = REGISTRY.contains_key(&address.to_string())
-        .then(|| REGISTRY.get(&address.to_string()).cloned().unwrap_or(connection_state::create_default_connection()))
-        .unwrap();
+    let connection: Connection;
+    if REGISTRY.contains_key(&address.to_string()) {
+        connection = REGISTRY.get(&address.to_string()).cloned().unwrap();
+    } else {
+        connection = connection_state::create_default_connection();
+    };
 
     match connection.state {
-        Handshake => handshake::handle_handshake(stream),
+        handshake => handshake::handle_handshake(stream).await,
     }
 
     // REGISTRY.insert(address.to_string(), connection);
