@@ -1,5 +1,6 @@
-use tokio::{net::{TcpStream}, io::{AsyncReadExt}};
+use tokio::{net::{TcpStream}, io::{AsyncReadExt, BufReader, AsyncBufReadExt}};
 
+use crate::{connection_state::Connection, SERVER_INFO};
 struct HandshakePacket {
     protocol_version: i32,
     address: String,
@@ -13,9 +14,10 @@ impl HandshakePacket {
         let port: u16 = buffer.read_u16().await.unwrap();
         let next_state: u8 = buffer.read_u8().await.unwrap();
 
-        let mut address: String = String::new();
-        buffer.read_to_string(&mut address).await
-            .expect("Invalid String on Handshake Packet address field.");
+        let mut reader = BufReader::new(buffer);
+        
+        let mut address = String::with_capacity(255);
+        reader.read_line(&mut address).await.unwrap();
     
         let handshake_packet = HandshakePacket {
                 protocol_version: protocol_version,
@@ -25,7 +27,7 @@ impl HandshakePacket {
         };
 
         return handshake_packet;
-    } 
+    }
 }
 
 #[derive(Debug)]
@@ -46,9 +48,14 @@ impl NextState {
     }
 }
 
-pub async fn handle_handshake(stream: TcpStream) {
+pub async fn handle_handshake(stream: TcpStream, connection: Connection) {
     let packet = HandshakePacket::read(stream).await;
+    println!("HANDSHAKE | PROTOCOL: {}, ADDRESS {}, PORT {} |", packet.protocol_version, packet.address, packet.port);
 
-    println!("HANDSHAKE | PROTOCOL: {}, ADDRESS {}, PORT {} |", packet.protocol_version, packet.address, packet.port)
+    if packet.protocol_version != SERVER_INFO.protocol_version {
+        println!("The protocol version is not compatible with the server version.");
+        return;
+    }
+
     // TODO: Handle handshake packet
 }

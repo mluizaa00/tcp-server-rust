@@ -4,15 +4,18 @@ extern crate lazy_static;
 mod connection_state;
 mod handshake;
 mod var_int;
+mod server;
 
 use std::collections::HashMap;
 
+use server::ServerInfo;
 use tokio::{net::{TcpListener, TcpStream}};
 
 use crate::{connection_state::Connection};
 
 lazy_static! {
     pub static ref REGISTRY: HashMap<String, connection_state::Connection> = HashMap::new();
+    pub static ref SERVER_INFO: ServerInfo = ServerInfo::create_default();
 }
 
 #[tokio::main]
@@ -57,7 +60,7 @@ async fn handle_connection(mut stream: TcpStream) {
     };
 
     match connection.state {
-        handshake => handshake::handle_handshake(stream).await,
+        handshake => handshake::handle_handshake(stream, connection).await,
     }
 
     // REGISTRY.insert(address.to_string(), connection);
