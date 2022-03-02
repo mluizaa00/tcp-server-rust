@@ -5,12 +5,12 @@ mod connection_state;
 mod handshake;
 mod var_int;
 mod server;
+mod decoder;
 
-use std::collections::HashMap;
-
-use server::ServerInfo;
+use std::{collections::HashMap};
 use tokio::{net::{TcpListener, TcpStream}};
 
+use server::ServerInfo;
 use crate::{connection_state::Connection};
 
 lazy_static! {
@@ -45,23 +45,9 @@ async fn start_server(ip: String) {
     }
 }
 
-async fn handle_connection(mut stream: TcpStream) {
-    let address = stream.local_addr().unwrap().ip();
-    println!("Connection established! {}", address.to_string());
+async fn handle_connection(stream: TcpStream) {
+    let address: String = stream.local_addr().unwrap().ip().to_string();
+    println!("Connection established! {}", address);
 
-    let packet_id = var_int::read_varint_i32(&mut stream).await.unwrap();
-    println!("PACKET ID: {}", packet_id);
-
-    let connection: Connection;
-    if REGISTRY.contains_key(&address.to_string()) {
-        connection = REGISTRY.get(&address.to_string()).cloned().unwrap();
-    } else {
-        connection = connection_state::create_default_connection();
-    };
-
-    match connection.state {
-        handshake => handshake::handle_handshake(stream, connection).await,
-    }
-
-    // REGISTRY.insert(address.to_string(), connection);
+    decoder::decode(stream, address).await;
 }

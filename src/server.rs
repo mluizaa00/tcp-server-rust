@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use uuid::Uuid;
-
+use tokio::net::TcpStream;
+use async_trait::async_trait;
 pub struct ServerInfo {
     pub version: String,
     pub protocol_version: i32,
@@ -23,6 +24,12 @@ impl ServerInfo {
             favicon: String::from("")
         };
     }
+}
+
+#[async_trait]
+pub trait Packet<T> {
+    async fn read(buffer: TcpStream) -> T;
+    async fn write(buffer: TcpStream);
 }
 
 pub struct PlayerConnection {
